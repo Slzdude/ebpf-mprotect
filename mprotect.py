@@ -1,36 +1,8 @@
 #!/usr/bin/python
-# @lint-avoid-python-3-compatibility-imports
-#
-# execsnoop Trace new processes via exec() syscalls.
-#           For Linux, uses BCC, eBPF. Embedded C.
-#
-# USAGE: execsnoop [-h] [-T] [-t] [-x] [-q] [-n NAME] [-l LINE]
-#                  [--max-args MAX_ARGS]
-#
-# This currently will print up to a maximum of 19 arguments, plus the process
-# name, so 20 fields in total (MAXARG).
-#
-# This won't catch all new processes: an application may fork() but not exec().
-#
-# Copyright 2016 Netflix, Inc.
-# Licensed under the Apache License, Version 2.0 (the "License")
-#
-# 07-Feb-2016   Brendan Gregg   Created this.
-
 from __future__ import print_function
 from bcc import BPF, DEBUG_PREPROCESSOR
-from bcc.containers import filter_by_containers
-from bcc.utils import ArgString, printb
-import bcc.utils as utils
-import argparse
-import re
-import time
-import pwd
-from collections import defaultdict
-from time import strftime
 
 
-# define BPF program
 bpf_text = """
 #include <uapi/linux/ptrace.h>
 #include <linux/sched.h>
@@ -78,23 +50,21 @@ int __do_mprotect_pkey(struct pt_regs *ctx,u64 start, u32 len, u64 prot)
 
 """
 
-# initialize BPF
 # if you want to see the c source after preprocess, set 'debug' to DEBUG_PREPROCESSOR
-b = BPF(text=bpf_text, debug=DEBUG_PREPROCESSOR)
+b = BPF(text=bpf_text, debug=0)
 b.attach_kprobe(event="do_mprotect_pkey", fn_name="__do_mprotect_pkey")
 
 
-# process event
 def print_event(cpu, data, size):
     event = b["events"].event(data)
     print(event.pid, event.ppid, event.uid, event.comm.decode(),
           hex(event.start), event.len, event.prot, sep='\t')
 
 
-# loop with callback to print_event
 b["events"].open_perf_buffer(print_event)
 
-print("MProtect bind begins!")
+print("mprotect monitor begins!")
+print("pid", "ppid", "uid", "comm", "start", "\tlen", "prot", sep='\t')
 
 while 1:
     try:
