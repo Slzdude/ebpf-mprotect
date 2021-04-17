@@ -38,4 +38,4 @@ pid     ppid    uid     comm    start           len     prot
 54783   54782   1000    ls      0x7f8da278f000  1810432 0
 ```
 
-可以编译`test.c`进行测试，它是从https://man7.org/linux/man-pages/man2/mprotect.2.html上弄的一个简单的测试程序。
+可以编译`test.c`进行测试，它是从`https://man7.org/linux/man-pages/man2/mprotect.2.html`上提取的一个简单的测试程序。
